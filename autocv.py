@@ -18,7 +18,7 @@ from utils import (
     add_page_number,
     BLUE,
     DARK_BLUE,
-    GREY,
+    GRAY,
     BLACK
 )
 
@@ -171,11 +171,7 @@ class CV:
                 p.paragraph_format.left_indent = self.tab_size
                 p.paragraph_format.first_line_indent = -self.tab_size
 
-                url = ed['url']
-                if url:
-                    name = add_hyperlink(p, ed['name'], url)
-                else:
-                    name = p.add_run({ed['name']})
+                name = p.add_run(ed['name'])
                 name.bold = True
                 p.add_run(f" ({ed['type']}). {ed['institution']}. {ed['location']}. {format_date_range(*ed['date'])}.")
 
@@ -196,8 +192,7 @@ class CV:
 
             _courses = position.pop('courses', None)
             if _courses:
-                num_courses = len(_courses)
-                course_tbl = cell.add_table(num_courses, 2)
+                course_tbl = cell.add_table(len(_courses), 2)
                 course_label_cell = course_tbl.cell(0, 0)
                 course_label_cell.paragraphs[0].add_run("Courses:")
 
@@ -208,7 +203,7 @@ class CV:
                     course_name = cp.add_run(course['name'])
                     course_name.font.bold = True
                     terms = cp.add_run(", {}.".format(course['terms']))
-                    terms.font.color.rgb = GREY
+                    terms.font.color.rgb = GRAY
                 return course_cell
 
         def date_getter(item):
@@ -382,12 +377,37 @@ class CV:
             def date_getter(item):
                 return str(item['date'])
 
+            def recording_handler(cell, item):
+                rec = item
+                p = cell.paragraphs[0]
+                album = p.add_run(f"{rec['album']}. ")
+                album.italic = True
+
+                track = p.add_run(f"{rec['track']}. ")
+                track.bold = True
+
+                p.add_run(f"{rec['recordLabel']}. ")
+
+                performers = rec.pop('performers', None)
+                if not performers:
+                    return
+                num_performers = len(performers)
+                for i, performer in enumerate(performers):
+                    p.add_run(f"{performer['name']} ")
+                    role = p.add_run(f"({performer['role']}){', ' if i < num_performers - 1 else '.'}")
+                    role.italic = True
+
+            def recording_date_getter(item):
+                return str(item['year'])
+
             self.__new_section("PUBLICATIONS")
-            articles, scores = publications[:1], publications[1:]
-            for items, label in [(articles, 'Peer-reviewed articles'), (scores, 'Scores')]:
+            articles, scores, recordings = publications['articles'], publications['scores'], publications['recordings']
+            for items, label in [(articles, 'Peer-reviewed articles'), (scores, 'Scores'), (recordings, 'Recordings')]:
                 self.__new_subsection(label)
-                items.sort(key=lambda x: x['date'])
-                self.__make_entry_table(self.doc, items, handler, date_getter)
+                items.sort(key=lambda x: x['date'] if 'date' in x else x['year'], reverse=True)
+                handle_func = handler if label != 'Recordings' else recording_handler
+                date_func = date_getter if label != 'Recordings' else recording_date_getter
+                self.__make_entry_table(self.doc, items, handle_func, date_func)
 
         software_list = self.data[self.CV_KEY]['work'].pop('software', None)
         if software_list:
@@ -483,7 +503,7 @@ class CV:
                 p.paragraph_format.left_indent = self.tab_size
                 commission = p.add_run(_commission)
                 commission.italic = True
-                commission.font.color.rgb = GREY
+                commission.font.color.rgb = GRAY
 
             performances = work['performances']
             if performances:

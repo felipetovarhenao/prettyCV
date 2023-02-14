@@ -23,7 +23,7 @@ MONTHS = [
 BLACK = RGBColor(0, 0, 0)
 BLUE = RGBColor.from_string('3E6CB1')
 DARK_BLUE = RGBColor.from_string('525860')
-GREY = RGBColor.from_string('62666c')
+GRAY = RGBColor.from_string('62666c')
 
 
 def add_hyperlink(paragraph, text, url):
