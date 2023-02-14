@@ -1,10 +1,8 @@
 from docx.oxml import OxmlElement, ns
 from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
 from docx.oxml.shared import OxmlElement
-from docx.enum.dml import MSO_THEME_COLOR_INDEX
+from docx.opc.constants import RELATIONSHIP_TYPE
 from docx.shared import RGBColor
-import docx
 
 MONTHS = [
     'Jan.',
@@ -31,15 +29,15 @@ GREY = RGBColor.from_string('62666c')
 def add_hyperlink(paragraph, text, url):
     # This gets access to the document.xml.rels file and gets a new relation id value
     part = paragraph.part
-    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+    r_id = part.relate_to(url, RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
 
     # Create the w:hyperlink tag and add needed values
-    hyperlink = docx.oxml.shared.OxmlElement('w:hyperlink')
-    hyperlink.set(docx.oxml.shared.qn('r:id'), r_id, )
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id, )
 
     # Create a w:r element and a new w:rPr element
-    new_run = docx.oxml.shared.OxmlElement('w:r')
-    rPr = docx.oxml.shared.OxmlElement('w:rPr')
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
 
     # Join all the xml elements together add add the required text to the w:r element
     new_run.append(rPr)
