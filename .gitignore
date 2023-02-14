@@ -1,0 +1,12 @@
+.*
+__pycache__
+**/__pycache__/
+*.pyc
+*.pyo
+!/.gitignore
+.DS_Store
+**/Icon?
+!.github
+*.docx
+*.pdf
+*.json
