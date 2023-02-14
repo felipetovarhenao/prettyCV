@@ -6,7 +6,6 @@ from time import sleep
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.text.paragraph import Paragraph
 from docx.shared import Pt, Inches
-from datetime import date
 from collections.abc import Callable
 from utils import (
     insertHR,
@@ -46,12 +45,13 @@ class CV:
         add_page_number(self.doc.sections[0].footer.paragraphs[0].add_run())
         self.doc.sections[0].footer.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    def write(self, output_file: str) -> None:
+    def write(self, output_file: str, open_file=True) -> None:
         self.doc.save(output_file)
-        cmd = """osascript -e 'tell application "Microsoft Word" to close windows'"""
-        os.system(cmd)
-        sleep(1)
-        subprocess.run(['open', output_file])
+        if open_file:
+            cmd = """osascript -e 'tell application "Microsoft Word" to close windows'"""
+            os.system(cmd)
+            sleep(1)
+            subprocess.run(['open', output_file])
 
     def load_data(self, cv_path: str, works_path: str) -> None:
         data = {}
@@ -545,12 +545,3 @@ class CV:
                                 f" ({performer['role']}){'.' if i == num_performers - 1 else (', and ' if i == num_performers - 2 else ', ')}")
                             role.italic = True
                     self.__insert_break(0.5)
-
-
-cv = CV()
-cv_path = '../personal-website/src/json/cv.json'
-works_path = '../personal-website/src/json/work-catalog.json'
-cv.load_data(cv_path=cv_path, works_path=works_path)
-cv.compile()
-file_id = date.today()
-cv.write(f'CV_{file_id}.docx')
