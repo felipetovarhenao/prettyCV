@@ -23,7 +23,9 @@ MONTHS = [
 # from docx import Document
 
 BLACK = RGBColor(0, 0, 0)
-BLUE = RGBColor(63, 127, 204)
+BLUE = RGBColor.from_string('3E6CB1')
+DARK_BLUE = RGBColor.from_string('525860')
+GREY = RGBColor.from_string('62666c')
 
 
 def add_hyperlink(paragraph, text, url):
@@ -94,7 +96,7 @@ def format_date_range(st, end):
     right += comma + y2
     if y1 != y2:
         left += comma + y1
-    return f"{left} — {right}"
+    return f"{left} – {right}"
 
 
 def insertHR(paragraph):
