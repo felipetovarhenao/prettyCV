@@ -96,7 +96,7 @@ class CV:
         self.__insert_break(2)
         interests = [x.lower() if x[1].islower() else x for x in self.data[self.CV_KEY]['basics']['interests']]
         interests.sort()
-        p = self.doc.add_paragraph("Research interests: ")
+        p = self.doc.add_paragraph("Interests: ")
         p.runs[0].bold = True
         f = p.paragraph_format
         f.left_indent = self.tab_size * 2
