@@ -106,6 +106,7 @@ class CV:
             self.__insert_break(0.5, parent=last_element or date_cell)
 
     def __parse_basics(self):
+        self.__add_header()
         self.__parse_personal_info()
         self.__parse_interests()
 
@@ -138,6 +139,18 @@ class CV:
         add_hyperlink(p, _url, _url)
         p.add_run(f" | ")
         add_hyperlink(p, basics['email'], basics['email'])
+
+    def __add_header(self):
+        basics = self.data[self.CV_KEY]['basics']
+        self.doc.settings.odd_and_even_pages_header_footer = True
+        self.doc.sections[0].different_first_page_header_footer = True
+        for i, attr in enumerate(['header', 'even_page_header']):
+            p = getattr(self.doc.sections[0], attr).paragraphs[0]
+            tab = '\t\t'
+            header = p.add_run(f"{[tab, ''][i]}{basics['name'].upper()}")
+            header.bold = True
+            p.add_run(' | Curriculum Vitae')
+        self.doc.sections[0].first_page_header.paragraphs[0].text = ''
 
     def __parse_interests(self):
         self.__insert_break(2)
