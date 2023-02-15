@@ -24,6 +24,7 @@ BLACK = RGBColor(0, 0, 0)
 BLUE = RGBColor.from_string('3E6CB1')
 DARK_BLUE = RGBColor.from_string('525860')
 GRAY = RGBColor.from_string('62666c')
+LIGHT_GRAY = RGBColor.from_string('80848C')
 
 
 def add_hyperlink(paragraph, text, url):
