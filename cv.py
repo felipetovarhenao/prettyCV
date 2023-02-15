@@ -27,7 +27,7 @@ class CV:
     CV_KEY = 'cv'
     WORKS_KEY = 'works'
 
-    def __init__(self, font: str = 'Nunito', reverse_format: bool = False) -> None:
+    def __init__(self, font: str = 'Lato', reverse_format: bool = False) -> None:
         self.doc = Document()
         self.font = font
         self.font_size = 10.5
@@ -60,6 +60,15 @@ class CV:
                 data[key] = json.load(f)
         self.data = data
 
+    def compile(self):
+        self.__parse_basics()
+        self.__parse_education()
+        self.__parse_experience()
+        self.__parse_publications()
+        self.__parse_awards()
+        self.__parse_skills()
+        self.__parse_works()
+
     def __new_section(self, name: str) -> Paragraph:
         self.__insert_break(2)
         header = self.doc.add_heading(name)
@@ -83,28 +92,24 @@ class CV:
         p.runs[0].font.size = gap
         p.paragraph_format.line_spacing = gap
 
-    def compile(self):
-        self.parse_basics()
-        self.parse_education()
-        self.parse_work_experience()
-        self.parse_publications()
-        self.parse_awards()
-        self.parse_skills()
-        self.parse_works()
+    def __make_entry_table(self, parent: object, items: list, handler: Callable, date_getter: Callable) -> None:
+        tbl = parent.add_table(len(items), 2)
+        last_date = None
+        for i, item in enumerate(items):
+            date_cell, item_cell = tbl.cell(i, int(self.reverse_format)), tbl.cell(i, 1-int(self.reverse_format))
+            date_cell.width, item_cell.width = self.date_col_width, self.item_col_width
+            date = date_getter(item)
+            if date != last_date:
+                date_cell.paragraphs[0].add_run(date)
+            last_date = date
+            last_element = handler(cell=item_cell, item=item)
+            self.__insert_break(0.5, parent=last_element or date_cell)
 
-    def parse_interests(self):
-        self.__insert_break(2)
-        interests = [x.lower() if x[1].islower() else x for x in self.data[self.CV_KEY]['basics']['interests']]
-        interests.sort()
-        p = self.doc.add_paragraph("Interests: ")
-        p.runs[0].bold = True
-        f = p.paragraph_format
-        f.left_indent = self.tab_size * 2
-        f.right_indent = self.tab_size * 2
-        keywords = p.add_run(f'{", ".join(interests)}.')
-        keywords.font.color.rgb = GRAY
+    def __parse_basics(self):
+        self.__parse_personal_info()
+        self.__parse_interests()
 
-    def parse_basics(self):
+    def __parse_personal_info(self):
         basics = self.data[self.CV_KEY]['basics']
 
         p = self.doc.add_paragraph("")
@@ -133,22 +138,21 @@ class CV:
         add_hyperlink(p, _url, _url)
         p.add_run(f" | ")
         add_hyperlink(p, basics['email'], basics['email'])
-        self.parse_interests()
 
-    def __make_entry_table(self, parent: object, items: list, handler: Callable, date_getter: Callable) -> None:
-        tbl = parent.add_table(len(items), 2)
-        last_date = None
-        for i, item in enumerate(items):
-            date_cell, item_cell = tbl.cell(i, int(self.reverse_format)), tbl.cell(i, 1-int(self.reverse_format))
-            date_cell.width, item_cell.width = self.date_col_width, self.item_col_width
-            date = date_getter(item)
-            if date != last_date:
-                date_cell.paragraphs[0].add_run(date)
-            last_date = date
-            last_element = handler(cell=item_cell, item=item)
-            self.__insert_break(0.5, parent=last_element or date_cell)
+    def __parse_interests(self):
+        self.__insert_break(2)
+        interests = [x.lower() if x[1].islower() else x for x in self.data[self.CV_KEY]['basics']['interests']]
+        interests.sort()
+        p = self.doc.add_paragraph("Interests: ")
+        p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+        p.runs[0].bold = True
+        f = p.paragraph_format
+        f.left_indent = self.tab_size * 2
+        f.right_indent = self.tab_size * 2
+        keywords = p.add_run(f'{" • ".join(interests)}.')
+        keywords.font.color.rgb = GRAY
 
-    def parse_education(self):
+    def __parse_education(self):
         education = self.data[self.CV_KEY].pop('education', None)
         if not education:
             return
@@ -175,6 +179,12 @@ class CV:
                     minors_label = p.add_run("\nMinor fields: ")
                     minors_label.font.bold = True
                     p.add_run(f"{', '.join(degree['minors'])}.")
+                highlights = degree['highlights']
+                if highlights:
+                    lb = p.add_run(f"\nHighlights: ")
+                    lb.bold = True
+                    hls = p.add_run(f"{', '.join(highlights)}.")
+                    hls.italic = True
 
         other_ed = education.pop('other', None)
         if other_ed:
@@ -188,13 +198,13 @@ class CV:
                 name.bold = True
                 p.add_run(f" ({ed['type']}). {ed['institution']}. {ed['location']}. {format_date_range(*ed['date'])}.")
 
-    def parse_work_experience(self):
-        self.parse_jobs()
-        self.parse_lectures()
-        self.parse_workshops()
-        self.parse_residencies()
+    def __parse_experience(self):
+        self.__parse_jobs()
+        self.__parse_lectures()
+        self.__parse_workshops()
+        self.__parse_residencies()
 
-    def parse_jobs(self):
+    def __parse_jobs(self):
         def handler(cell, item):
             position = item
             p = cell.paragraphs[0]
@@ -234,7 +244,7 @@ class CV:
                            True else (x['date'][0] if x['date'][1] == False else x['date'][1]), reverse=True)
             self.__make_entry_table(self.doc, positions, handler, date_getter)
 
-    def parse_lectures(self):
+    def __parse_lectures(self):
         lectures = self.data[self.CV_KEY]['work'].pop('lectures', None)
         if not lectures:
             return
@@ -255,7 +265,7 @@ class CV:
                 year, month, day = parse_date(event['date'])
                 p.add_run(f". { event['venue']}. {event['city']}. {event['country']}. {f'{month} {day}, {year}'}.")
 
-    def parse_workshops(self):
+    def __parse_workshops(self):
         workshops = self.data[self.CV_KEY]['work'].pop('workshops', None)
         if not workshops:
             return
@@ -279,7 +289,7 @@ class CV:
                 p.add_run(
                     f". {event['numSessions']} sessions ({event['totalHours']} hours total). {event['city']}. {event['country']}. {month} {day}, {year}.")
 
-    def parse_residencies(self):
+    def __parse_residencies(self):
         residencies = self.data[self.CV_KEY]['work'].pop('residencies', None)
         if not residencies:
             return
@@ -314,7 +324,7 @@ class CV:
         residencies.sort(key=lambda x: x['date'], reverse=True)
         self.__make_entry_table(self.doc, residencies, handler, date_getter)
 
-    def parse_awards(self):
+    def __parse_awards(self):
         self.__new_section("AWARDS")
         awards = []
         commissions = []
@@ -327,11 +337,11 @@ class CV:
             if commission:
                 commissions.append(work)
 
-        self._parse_awards(awards, "Artistic awards")
-        self._parse_commissions(commissions)
-        self._parse_awards(self.data[self.CV_KEY]['awards'].pop('academic', None), "Academic awards")
+        self.___parse_awards(awards, "Artistic awards")
+        self.___parse_commissions(commissions)
+        self.___parse_awards(self.data[self.CV_KEY]['awards'].pop('academic', None), "Academic awards")
 
-    def _parse_commissions(self, commissions):
+    def ___parse_commissions(self, commissions):
         if not commissions:
             return
 
@@ -352,7 +362,7 @@ class CV:
         commissions.sort(key=lambda x: x['year'], reverse=True)
         self.__make_entry_table(self.doc, commissions, handler, date_getter)
 
-    def _parse_awards(self, awards, label):
+    def ___parse_awards(self, awards, label):
         if not awards:
             return
 
@@ -371,7 +381,7 @@ class CV:
         awards.sort(key=lambda x: x['date'], reverse=True)
         self.__make_entry_table(self.doc, awards, handler, date_getter)
 
-    def parse_publications(self):
+    def __parse_publications(self):
         publications = self.data[self.CV_KEY]['work'].pop('publications', None)
         if publications:
             def handler(cell, item):
@@ -454,7 +464,7 @@ class CV:
             software_list.sort(key=lambda x: x['year'], reverse=True)
             self.__make_entry_table(self.doc, software_list, handler, date_getter)
 
-    def parse_skills(self):
+    def __parse_skills(self):
         self.__new_section("SKILLS")
         skills_dict = self.data[self.CV_KEY].pop('skills', None)
         if not skills_dict:
@@ -486,7 +496,7 @@ class CV:
                 p.paragraph_format.line_spacing = gap
             self.__insert_break()
 
-    def parse_works(self):
+    def __parse_works(self):
         works = self.data[self.WORKS_KEY]
         if not works:
             return
