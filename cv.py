@@ -43,8 +43,6 @@ class CV:
             style.font.color.rgb = BLACK
             style.paragraph_format.space_after = Pt(0)
             style.paragraph_format.space_before = Pt(0)
-        add_page_number(self.doc.sections[0].footer.paragraphs[0].add_run())
-        self.doc.sections[0].footer.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     def write(self, output_file: str, open_file=True) -> None:
         self.doc.save(output_file)
@@ -62,6 +60,7 @@ class CV:
         self.data = data
 
     def compile(self):
+        self.__apply_formatting()
         self.__parse_basics()
         self.__parse_education()
         self.__parse_experience()
@@ -107,7 +106,6 @@ class CV:
             self.__insert_break(0.5, parent=last_element or date_cell)
 
     def __parse_basics(self):
-        self.__add_headers()
         self.__parse_personal_info()
         self.__parse_interests()
 
@@ -141,7 +139,7 @@ class CV:
         p.add_run(f" | ")
         add_hyperlink(p, basics['email'], basics['email'])
 
-    def __add_headers(self):
+    def __apply_formatting(self):
         basics = self.data[self.CV_KEY]['basics']
         self.doc.settings.odd_and_even_pages_header_footer = True
         self.doc.sections[0].different_first_page_header_footer = True
@@ -154,6 +152,11 @@ class CV:
             for x in [header, suffix]:
                 x.font.color.rgb = LIGHT_GRAY
         self.doc.sections[0].first_page_header.paragraphs[0].text = ''
+        for i, attr in enumerate(['footer', 'even_page_footer']):
+            p = getattr(self.doc.sections[0], attr).paragraphs[0]
+            add_page_number(p.add_run())
+            p.runs[0].font.color.rgb = LIGHT_GRAY
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     def __parse_interests(self):
         self.__insert_break(2)
@@ -540,7 +543,7 @@ class CV:
                 self.__insert_break(0.5)
                 p = self.doc.add_paragraph()
                 p.paragraph_format.left_indent = self.tab_size
-                commission = p.add_run(_commission)
+                commission = p.add_run(f'{_commission}.')
                 commission.italic = True
                 commission.font.color.rgb = GRAY
 
