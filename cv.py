@@ -92,6 +92,17 @@ class CV:
         self.parse_skills()
         self.parse_works()
 
+    def parse_interests(self):
+        self.__insert_break(2)
+        interests = self.data[self.CV_KEY]['basics']['interests']
+        p = self.doc.add_paragraph("Research interests: ")
+        p.runs[0].bold = True
+        f = p.paragraph_format
+        f.left_indent = self.tab_size * 2
+        f.right_indent = self.tab_size * 2
+        keywords = p.add_run(f'{", ".join(interests)}.')
+        keywords.font.color.rgb = GRAY
+
     def parse_basics(self):
         basics = self.data[self.CV_KEY]['basics']
 
@@ -121,6 +132,7 @@ class CV:
         add_hyperlink(p, _url, _url)
         p.add_run(f" | ")
         add_hyperlink(p, basics['email'], basics['email'])
+        self.parse_interests()
 
     def __make_entry_table(self, parent: object, items: list, handler: Callable, date_getter: Callable) -> None:
         tbl = parent.add_table(len(items), 2)
