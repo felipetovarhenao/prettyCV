@@ -32,7 +32,7 @@ class CV:
         self.doc = Document()
         self.font = font
         self.font_size = 10.5
-        self.tab_size = Inches(0.25)
+        self.tab_size = Inches(0.3)
         self.date_col_width = Inches(0.95)
         self.item_col_width = Inches(5.25)
         self.reverse_format = reverse_format
@@ -561,7 +561,7 @@ class CV:
                 self.__insert_break(0.5)
                 for i, performance in enumerate(performances):
                     p = self.doc.add_paragraph()
-                    p.paragraph_format.left_indent = self.tab_size * 2
+                    p.paragraph_format.left_indent = self.tab_size
 
                     event = p.add_run(performance['event'])
                     event.font.bold = True
@@ -579,7 +579,7 @@ class CV:
                     performers = performance.pop('performers', None)
                     if performers:
                         p = self.doc.add_paragraph("Performed by ")
-                        p.paragraph_format.left_indent = self.tab_size * 3
+                        p.paragraph_format.left_indent = self.tab_size * 2
                         num_performers = len(performers)
                         for i, performer in enumerate(performers):
                             p.add_run(performer['name'])
