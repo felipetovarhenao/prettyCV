@@ -1,7 +1,9 @@
-from docx.oxml import OxmlElement, ns
+from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.oxml.shared import OxmlElement
 from docx.opc.constants import RELATIONSHIP_TYPE
+from docx.text.paragraph import Paragraph, Run
+from docx.table import Table
 from docx.shared import RGBColor
 
 MONTHS = [
@@ -27,7 +29,7 @@ GRAY = RGBColor.from_string('62666c')
 LIGHT_GRAY = RGBColor.from_string('80848C')
 
 
-def add_hyperlink(paragraph, text, url):
+def add_hyperlink(paragraph: Paragraph, text: str, url: str) -> Run:
     # This gets access to the document.xml.rels file and gets a new relation id value
     part = paragraph.part
     r_id = part.relate_to(url, RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
@@ -57,12 +59,12 @@ def add_hyperlink(paragraph, text, url):
     return r
 
 
-def parse_date(date: str):
+def parse_date(date: str) -> tuple:
     year, month, day = date.split("-")
     return year, MONTHS[int(month) - 1], day
 
 
-def format_year_range(st, end=None):
+def format_year_range(st: int, end: int | None = None) -> str:
     if end == True:
         end = 'pr.'
     elif not end:
@@ -72,7 +74,7 @@ def format_year_range(st, end=None):
     return f"{st} – {end}"
 
 
-def format_date_range(st, end):
+def format_date_range(st: str, end: str) -> str:
     y1, m1, d1 = parse_date(st)
     y2, m2, d2 = parse_date(end)
 
@@ -98,7 +100,7 @@ def format_date_range(st, end):
     return f"{left} – {right}"
 
 
-def insertHR(paragraph):
+def insertHR(paragraph: Paragraph) -> None:
     p = paragraph._p  # p is the <w:p> XML element
     pPr = p.get_or_add_pPr()
     pBdr = OxmlElement('w:pBdr')
@@ -119,7 +121,7 @@ def insertHR(paragraph):
     pBdr.append(bottom)
 
 
-def indent_table(table, indent):
+def indent_table(table: Table, indent: int) -> None:
     # noinspection PyProtectedMember
     tbl_pr = table._element.xpath('w:tblPr')
     if tbl_pr:
@@ -129,15 +131,15 @@ def indent_table(table, indent):
         tbl_pr[0].append(e)
 
 
-def create_element(name):
+def create_element(name: str):
     return OxmlElement(name)
 
 
 def create_attribute(element, name, value):
-    element.set(ns.qn(name), value)
+    element.set(qn(name), value)
 
 
-def add_page_number(run):
+def add_page_number(run: Run) -> None:
     fldChar1 = create_element('w:fldChar')
     create_attribute(fldChar1, 'w:fldCharType', 'begin')
 
