@@ -4,7 +4,8 @@ import subprocess
 from docx import Document
 from time import sleep
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.text.paragraph import Paragraph
+from docx.table import _Cell
+from docx.text.paragraph import Paragraph, Parented
 from docx.shared import Pt, Inches
 from collections.abc import Callable
 from utils import (
@@ -44,7 +45,7 @@ class CV:
             style.paragraph_format.space_after = Pt(0)
             style.paragraph_format.space_before = Pt(0)
 
-    def write(self, output_file: str, open_file=True) -> None:
+    def write(self, output_file: str, open_file: bool = True) -> None:
         self.doc.save(output_file)
         if open_file:
             cmd = """osascript -e 'tell application "Microsoft Word" to close windows'"""
@@ -59,7 +60,7 @@ class CV:
                 data[key] = json.load(f)
         self.data = data
 
-    def compile(self):
+    def compile(self) -> None:
         self.__apply_formatting()
         self.__parse_basics()
         self.__parse_education()
@@ -85,7 +86,7 @@ class CV:
         self.__insert_break()
         return subheader
 
-    def __insert_break(self, n_units: int | float = 1, parent=None):
+    def __insert_break(self, n_units: int | float = 1, parent: Parented | None = None):
         obj = parent or self.doc
         gap = Pt(7 * n_units)
         p = obj.add_paragraph(" ")
@@ -105,11 +106,11 @@ class CV:
             last_element = handler(cell=item_cell, item=item)
             self.__insert_break(0.5, parent=last_element or date_cell)
 
-    def __parse_basics(self):
+    def __parse_basics(self) -> None:
         self.__parse_personal_info()
         self.__parse_interests()
 
-    def __parse_personal_info(self):
+    def __parse_personal_info(self) -> None:
         basics = self.data[self.CV_KEY]['basics']
 
         p = self.doc.add_paragraph("")
@@ -139,7 +140,7 @@ class CV:
         p.add_run(f" | ")
         add_hyperlink(p, basics['email'], basics['email'])
 
-    def __apply_formatting(self):
+    def __apply_formatting(self) -> None:
         basics = self.data[self.CV_KEY]['basics']
         self.doc.settings.odd_and_even_pages_header_footer = True
         self.doc.sections[0].different_first_page_header_footer = True
@@ -158,7 +159,7 @@ class CV:
             p.runs[0].font.color.rgb = LIGHT_GRAY
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    def __parse_interests(self):
+    def __parse_interests(self) -> None:
         self.__insert_break(2)
         interests = [x.lower() if x[1].islower() else x for x in self.data[self.CV_KEY]['basics']['interests']]
         interests.sort()
@@ -171,7 +172,7 @@ class CV:
         keywords = p.add_run(f'{" • ".join(interests)}.')
         keywords.font.color.rgb = GRAY
 
-    def __parse_education(self):
+    def __parse_education(self) -> None:
         education = self.data[self.CV_KEY].pop('education', None)
         if not education:
             return
@@ -217,14 +218,14 @@ class CV:
                 name.bold = True
                 p.add_run(f" ({ed['type']}). {ed['institution']}. {ed['location']}. {format_date_range(*ed['date'])}.")
 
-    def __parse_experience(self):
+    def __parse_experience(self) -> None:
         self.__parse_jobs()
         self.__parse_lectures()
         self.__parse_workshops()
         self.__parse_residencies()
 
-    def __parse_jobs(self):
-        def handler(cell, item):
+    def __parse_jobs(self) -> None:
+        def handler(cell: _Cell, item: dict) -> _Cell:
             position = item
             p = cell.paragraphs[0]
             name = p.add_run(position['name'])
@@ -248,7 +249,7 @@ class CV:
                     terms.font.color.rgb = GRAY
                 return course_cell
 
-        def date_getter(item):
+        def date_getter(item: dict) -> str:
             return format_year_range(*item['date'])
 
         work = self.data[self.CV_KEY]['work']
@@ -263,7 +264,7 @@ class CV:
                            True else (x['date'][0] if x['date'][1] == False else x['date'][1]), reverse=True)
             self.__make_entry_table(self.doc, positions, handler, date_getter)
 
-    def __parse_lectures(self):
+    def __parse_lectures(self) -> None:
         lectures = self.data[self.CV_KEY]['work'].pop('lectures', None)
         if not lectures:
             return
@@ -284,7 +285,7 @@ class CV:
                 year, month, day = parse_date(event['date'])
                 p.add_run(f". { event['venue']}. {event['city']}. {event['country']}. {f'{month} {day}, {year}'}.")
 
-    def __parse_workshops(self):
+    def __parse_workshops(self) -> None:
         workshops = self.data[self.CV_KEY]['work'].pop('workshops', None)
         if not workshops:
             return
@@ -308,15 +309,15 @@ class CV:
                 p.add_run(
                     f". {event['numSessions']} sessions ({event['totalHours']} hours total). {event['city']}. {event['country']}. {month} {day}, {year}.")
 
-    def __parse_residencies(self):
+    def __parse_residencies(self) -> None:
         residencies = self.data[self.CV_KEY]['work'].pop('residencies', None)
         if not residencies:
             return
 
-        def date_getter(item):
+        def date_getter(item: dict) -> str:
             return parse_date(item['date'])[0]
 
-        def handler(cell, item):
+        def handler(cell: _Cell, item: dict) -> None:
             residency = item
             p = cell.paragraphs[0]
             role = p.add_run(residency['role'])
@@ -343,7 +344,7 @@ class CV:
         residencies.sort(key=lambda x: x['date'], reverse=True)
         self.__make_entry_table(self.doc, residencies, handler, date_getter)
 
-    def __parse_awards(self):
+    def __parse_awards(self) -> None:
         self.__new_section("AWARDS")
         awards = []
         commissions = []
@@ -360,11 +361,11 @@ class CV:
         self.___parse_commissions(commissions)
         self.___parse_awards(self.data[self.CV_KEY]['awards'].pop('academic', None), "Academic awards")
 
-    def ___parse_commissions(self, commissions):
+    def ___parse_commissions(self, commissions) -> None:
         if not commissions:
             return
 
-        def handler(cell, item):
+        def handler(cell: _Cell, item: dict) -> None:
             commission = item
             p = cell.paragraphs[0]
             name = p.add_run(commission['name'])
@@ -375,17 +376,18 @@ class CV:
 
             p.add_run(" {}.".format(commission['commission']))
 
-        def date_getter(item):
+        def date_getter(item: dict) -> str:
             return str(item['year'])
+
         self.__new_subsection("Commissions")
         commissions.sort(key=lambda x: x['year'], reverse=True)
         self.__make_entry_table(self.doc, commissions, handler, date_getter)
 
-    def ___parse_awards(self, awards, label):
+    def ___parse_awards(self, awards: dict, label: str) -> None:
         if not awards:
             return
 
-        def handler(cell, item):
+        def handler(cell: _Cell, item: dict) -> None:
             award = item
             p = cell.paragraphs[0]
             name = p.add_run(award['name'])
@@ -393,17 +395,17 @@ class CV:
 
             p.add_run(". {}. {}.".format(*[award[x] for x in ['institution', 'country']]))
 
-        def date_getter(item):
+        def date_getter(item: dict) -> str:
             return str(item['date'])
 
         self.__new_subsection(label)
         awards.sort(key=lambda x: x['date'], reverse=True)
         self.__make_entry_table(self.doc, awards, handler, date_getter)
 
-    def __parse_publications(self):
+    def __parse_publications(self) -> None:
         publications = self.data[self.CV_KEY]['work'].pop('publications', None)
         if publications:
-            def handler(cell, item):
+            def handler(cell: _Cell, item: dict) -> None:
                 pub = item
                 p = cell.paragraphs[0]
                 p.add_run(f"{pub['author']} ({pub['date']}). ")
@@ -416,10 +418,10 @@ class CV:
                 p.add_run(f", ({pub['edition']}), {'-'.join([str(x) for x in pub['pages']])}. ")
                 add_hyperlink(p, pub['doi'], pub['doi'])
 
-            def date_getter(item):
+            def date_getter(item: dict) -> str:
                 return str(item['date'])
 
-            def recording_handler(cell, item):
+            def recording_handler(cell: _Cell, item: dict) -> None:
                 rec = item
                 p = cell.paragraphs[0]
                 album = p.add_run(f"{rec['album']}. ")
@@ -439,7 +441,7 @@ class CV:
                     role = p.add_run(f"({performer['role']}){', ' if i < num_performers - 1 else '.'}")
                     role.italic = True
 
-            def recording_date_getter(item):
+            def recording_date_getter(item: str) -> str:
                 return str(item['year'])
 
             self.__new_section("PUBLICATIONS")
@@ -453,7 +455,7 @@ class CV:
 
         software_list = self.data[self.CV_KEY]['work'].pop('software', None)
         if software_list:
-            def handler(cell, item):
+            def handler(cell: _Cell, item: dict) -> None:
                 software = item
                 p = cell.paragraphs[0]
                 name = p.add_run(software['name'])
@@ -476,14 +478,14 @@ class CV:
                 descr = p.add_run(f"{software['description']}")
                 descr.font.italic = True
 
-            def date_getter(item):
+            def date_getter(item: dict) -> str:
                 return str(item['year'])
 
             self.__new_subsection("Software contributions")
             software_list.sort(key=lambda x: x['year'], reverse=True)
             self.__make_entry_table(self.doc, software_list, handler, date_getter)
 
-    def __parse_skills(self):
+    def __parse_skills(self) -> None:
         self.__new_section("SKILLS")
         skills_dict = self.data[self.CV_KEY].pop('skills', None)
         if not skills_dict:
@@ -515,7 +517,7 @@ class CV:
                 p.paragraph_format.line_spacing = gap
             self.__insert_break()
 
-    def __parse_works(self):
+    def __parse_works(self) -> None:
         works = self.data[self.WORKS_KEY]
         if not works:
             return
