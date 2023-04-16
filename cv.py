@@ -481,7 +481,7 @@ class CV:
             def date_getter(item: dict) -> str:
                 return str(item['year'])
 
-            self.__new_subsection("Software contributions")
+            self.__new_subsection("Software")
             software_list.sort(key=lambda x: x['year'], reverse=True)
             self.__make_entry_table(self.doc, software_list, handler, date_getter)
 
