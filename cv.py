@@ -586,6 +586,7 @@ class CV:
                         for i, performer in enumerate(performers):
                             p.add_run(performer['name'])
                             role = p.add_run(
-                                f" ({performer['role']}){'.' if i == num_performers - 1 else (', and ' if i == num_performers - 2 else ', ')}")
+                                f" ({performer['role']})")
                             role.italic = True
+                            p.add_run(f"{'.' if i == num_performers - 1 else (', and ' if i == num_performers - 2 else ', ')}")
                     self.__insert_break(0.5)
