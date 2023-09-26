@@ -13,4 +13,4 @@ file_doc = file + '.docx'
 if len(sys.argv) > 1 and sys.argv[1] == '--local':
     cv.write(file_doc, open_file=False)
 else:
-    cv.write(f'/Users/felipe-tovar-henao/Google Drive/My Drive/FTH Drive/CV/CV_{file_id}.docx')
+    cv.write(f'/Users/felipe-tovar-henao/My Drive/FTH Drive/CV/CV_{file_id}.docx')
