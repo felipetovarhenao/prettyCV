@@ -414,9 +414,9 @@ class CV:
 
                 publisher = p.add_run(f". {pub['publisher']}")
                 publisher.font.italic = True
-
-                p.add_run(f", ({pub['edition']}), {'-'.join([str(x) for x in pub['pages']])}. ")
-                add_hyperlink(p, pub['doi'], pub['doi'])
+                if pub["pages"]:
+                    p.add_run(f", ({pub['edition']}), {'-'.join([str(x) for x in pub['pages']])}. ")
+                    add_hyperlink(p, pub['doi'], pub['doi'])
 
             def date_getter(item: dict) -> str:
                 return str(item['date'])
