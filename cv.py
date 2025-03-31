@@ -268,7 +268,7 @@ class CV:
         lectures = self.data[self.CV_KEY]['work'].pop('lectures', None)
         if not lectures:
             return
-        self.__new_subsection("Academic Lectures + Presentations")
+        self.__new_subsection("Academic lectures + presentations")
         lectures.sort(key=lambda x: sorted(x['events'], key=lambda y: y['date'], reverse=True)[0]['date'], reverse=True)
         for lecture in lectures:
             p = self.doc.add_paragraph()
